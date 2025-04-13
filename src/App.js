@@ -1,8 +1,29 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 function App() {
-  const [pagina, setPagina] = useState("home");
+  const [pagina, setPagina] = useState("intro");
+  const [mostrarSistema, setMostrarSistema] = useState(false);
+
+  const entrar = () => {
+    setMostrarSistema(true);
+    setPagina("home");
+  };
+
+  const limparDados = () => {
+    localStorage.clear();
+    window.location.reload();
+  };
+
+  if (pagina === "intro" && !mostrarSistema) {
+    return (
+      <div className="intro">
+        <h1 className="typewriter">🔓 Iniciando sistema Nostalgia Games...</h1>
+        <button onClick={entrar}>Entrar no sistema</button>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
@@ -12,6 +33,7 @@ function App() {
         <button onClick={() => setPagina("jogos")}>Jogos</button>
         <button onClick={() => setPagina("alugueis")}>Aluguéis</button>
         <button onClick={() => setPagina("devolucoes")}>Devoluções</button>
+        <button onClick={limparDados}>🧹 Limpar Dados</button>
       </div>
 
       {pagina === "home" && <p>Bem-vindo à Nostalgia Games!</p>}
@@ -23,20 +45,22 @@ function App() {
   );
 }
 
-const clientesGlobais = [];
-const jogosGlobais = [];
-const alugueisGlobais = [];
-
 function Clientes() {
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [clientes, setClientes] = useState(clientesGlobais);
+  const [clientes, setClientes] = useState([]);
+
+  useEffect(() => {
+    const armazenados = localStorage.getItem("clientes");
+    if (armazenados) setClientes(JSON.parse(armazenados));
+  }, []);
 
   const cadastrar = () => {
     if (nome && telefone) {
-      const novo = { id: clientes.length + 1, nome, telefone };
-      clientesGlobais.push(novo);
-      setClientes([...clientesGlobais]);
+      const novo = { id: Date.now(), nome, telefone };
+      const atualizados = [...clientes, novo];
+      setClientes(atualizados);
+      localStorage.setItem("clientes", JSON.stringify(atualizados));
       setNome("");
       setTelefone("");
     }
@@ -63,13 +87,19 @@ function Jogos() {
   const [titulo, setTitulo] = useState("");
   const [plataforma, setPlataforma] = useState("");
   const [codigo, setCodigo] = useState("");
-  const [jogos, setJogos] = useState(jogosGlobais);
+  const [jogos, setJogos] = useState([]);
+
+  useEffect(() => {
+    const armazenados = localStorage.getItem("jogos");
+    if (armazenados) setJogos(JSON.parse(armazenados));
+  }, []);
 
   const cadastrar = () => {
     if (titulo && plataforma && codigo) {
-      const novo = { id: jogos.length + 1, titulo, plataforma, codigo, alugado: false };
-      jogosGlobais.push(novo);
-      setJogos([...jogosGlobais]);
+      const novo = { id: Date.now(), titulo, plataforma, codigo, alugado: false };
+      const atualizados = [...jogos, novo];
+      setJogos(atualizados);
+      localStorage.setItem("jogos", JSON.stringify(atualizados));
       setTitulo("");
       setPlataforma("");
       setCodigo("");
@@ -97,15 +127,33 @@ function Jogos() {
 function Alugueis() {
   const [clienteId, setClienteId] = useState("");
   const [jogoId, setJogoId] = useState("");
-  const [alugueis, setAlugueis] = useState(alugueisGlobais);
+  const [alugueis, setAlugueis] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [jogos, setJogos] = useState([]);
+
+  useEffect(() => {
+    setClientes(JSON.parse(localStorage.getItem("clientes")) || []);
+    setJogos(JSON.parse(localStorage.getItem("jogos")) || []);
+    setAlugueis(JSON.parse(localStorage.getItem("alugueis")) || []);
+  }, []);
 
   const alugar = () => {
-    const cliente = clientesGlobais.find((c) => c.id === parseInt(clienteId));
-    const jogo = jogosGlobais.find((j) => j.id === parseInt(jogoId));
+    const cliente = clientes.find((c) => c.id === parseInt(clienteId));
+    const jogo = jogos.find((j) => j.id === parseInt(jogoId));
     if (cliente && jogo && !jogo.alugado) {
-      jogo.alugado = true;
-      alugueisGlobais.push({ cliente, jogo, data: new Date().toLocaleDateString() });
-      setAlugueis([...alugueisGlobais]);
+      const novoAluguel = {
+        cliente,
+        jogo: { ...jogo },
+        data: new Date().toLocaleDateString(),
+      };
+      const alugueisAtualizados = [...alugueis, novoAluguel];
+      const jogosAtualizados = jogos.map((j) =>
+        j.id === jogo.id ? { ...j, alugado: true } : j
+      );
+      setAlugueis(alugueisAtualizados);
+      setJogos(jogosAtualizados);
+      localStorage.setItem("alugueis", JSON.stringify(alugueisAtualizados));
+      localStorage.setItem("jogos", JSON.stringify(jogosAtualizados));
       setClienteId("");
       setJogoId("");
     }
@@ -116,7 +164,7 @@ function Alugueis() {
       <h2>Registro de Aluguéis</h2>
       <select value={clienteId} onChange={(e) => setClienteId(e.target.value)}>
         <option value="">Selecione o cliente</option>
-        {clientesGlobais.map((c) => (
+        {clientes.map((c) => (
           <option key={c.id} value={c.id}>
             {c.nome}
           </option>
@@ -124,7 +172,7 @@ function Alugueis() {
       </select>
       <select value={jogoId} onChange={(e) => setJogoId(e.target.value)}>
         <option value="">Selecione o jogo</option>
-        {jogosGlobais.filter((j) => !j.alugado).map((j) => (
+        {jogos.filter((j) => !j.alugado).map((j) => (
           <option key={j.id} value={j.id}>
             {j.titulo}
           </option>
@@ -143,12 +191,25 @@ function Alugueis() {
 }
 
 function Devolucoes() {
-  const [alugueis, setAlugueis] = useState(alugueisGlobais);
+  const [alugueis, setAlugueis] = useState([]);
+  const [jogos, setJogos] = useState([]);
+
+  useEffect(() => {
+    setAlugueis(JSON.parse(localStorage.getItem("alugueis")) || []);
+    setJogos(JSON.parse(localStorage.getItem("jogos")) || []);
+  }, []);
 
   const devolver = (index) => {
-    alugueis[index].jogo.alugado = false;
-    alugueisGlobais.splice(index, 1);
-    setAlugueis([...alugueisGlobais]);
+    const jogoId = alugueis[index].jogo.id;
+    const alugueisAtualizados = [...alugueis];
+    alugueisAtualizados.splice(index, 1);
+    const jogosAtualizados = jogos.map((j) =>
+      j.id === jogoId ? { ...j, alugado: false } : j
+    );
+    setAlugueis(alugueisAtualizados);
+    setJogos(jogosAtualizados);
+    localStorage.setItem("alugueis", JSON.stringify(alugueisAtualizados));
+    localStorage.setItem("jogos", JSON.stringify(jogosAtualizados));
   };
 
   return (
@@ -168,4 +229,3 @@ function Devolucoes() {
 }
 
 export default App;
-
