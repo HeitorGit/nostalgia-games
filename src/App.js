@@ -1,28 +1,14 @@
 
 import React, { useState, useEffect } from "react";
 import "./App.css";
+import TelaInicial from "./TelaInicial";
 
 function App() {
-  const [pagina, setPagina] = useState("intro");
-  const [mostrarSistema, setMostrarSistema] = useState(false);
+  const [pagina, setPagina] = useState("home");
+  const [entrar, setEntrar] = useState(false);
 
-  const entrar = () => {
-    setMostrarSistema(true);
-    setPagina("home");
-  };
-
-  const limparDados = () => {
-    localStorage.clear();
-    window.location.reload();
-  };
-
-  if (pagina === "intro" && !mostrarSistema) {
-    return (
-      <div className="intro">
-        <h1 className="typewriter">🔓 Iniciando sistema Nostalgia Games...</h1>
-        <button onClick={entrar}>Entrar no sistema</button>
-      </div>
-    );
+  if (!entrar) {
+    return <TelaInicial aoEntrar={() => setEntrar(true)} />;
   }
 
   return (
@@ -33,7 +19,6 @@ function App() {
         <button onClick={() => setPagina("jogos")}>Jogos</button>
         <button onClick={() => setPagina("alugueis")}>Aluguéis</button>
         <button onClick={() => setPagina("devolucoes")}>Devoluções</button>
-        <button onClick={limparDados}>🧹 Limpar Dados</button>
       </div>
 
       {pagina === "home" && <p>Bem-vindo à Nostalgia Games!</p>}

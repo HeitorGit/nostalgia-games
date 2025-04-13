@@ -1,0 +1,26 @@
+.tela-inicial {
+    background-color: black;
+    color: #00ff00;
+    font-family: monospace;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .tela-inicial p {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .tela-inicial button {
+    padding: 10px 20px;
+    background-color: black;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
